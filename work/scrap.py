@@ -43,13 +43,11 @@ def log(arg, level=DEBUG):
     elif level == ERROR:
         logger.error(arg)
 
-def get_current_term():
+def get_current():
     now = datetime.datetime.now()
     year = now.year
-    if now.month < 4:
-        year -= 1
-    term = 'spring' if 4 <= now.month <= 9 else 'autumn'
-    return year, term
+    month = now.month
+    return year, month
 
 def init_csv_file(year, term):
     with open(f'../data/syllabus_data_{year}_{term}.csv', 'a', newline='', encoding='utf-8') as file:
@@ -157,9 +155,9 @@ def format_syllabus_data(source_path, dest_path):
 def main():
     log("==========Scraping started==========")
     check_versions()
-    year, term = get_current_term()
+    year, month = get_current()
     dest_dir = '../data'
-    name = f'syllabus_data_{year}_{term}.csv'
+    name = f'syllabus_data_{year}_{month}.csv'
     raw_dir = f'{dest_dir}/raw_{name}'
     out_dir = f'{dest_dir}/{name}'
 
