@@ -19,7 +19,7 @@ def set_logger():
     root_logger = getLogger()
     root_logger.setLevel(DEBUG)
     rotating_handler = handlers.RotatingFileHandler(
-        r'./app.log',
+        r'../app.log',
         mode="a",
         maxBytes=100 * 1024,
         backupCount=3,
