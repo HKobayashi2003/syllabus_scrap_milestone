@@ -10,7 +10,7 @@ export DISPLAY=:99
 sleep 5
 
 # Execute Python script
-nohup python /work/scrap.py > /work/log.log 2>&1 &
+python /work/scrap.py
 
 # Keep the container running
 /bin/bash

@@ -7,10 +7,41 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from mojimoji import zen_to_han
-import pandas as pd
 import subprocess
+from logging import getLogger, handlers, Formatter, DEBUG, ERROR
 
 faculties = ['基幹', '創造', '先進', '政経', '法学', '教育', '商学', '社学', '人科', 'スポーツ', '国際教養', '文構', '文', '人通', '芸術', '日本語', '留学', 'グローバル']
+
+
+def set_logger():
+    # 全体のログ設定
+    # ファイルに書き出す。ログが100KB溜まったらバックアップにして新しいファイルを作る。
+    root_logger = getLogger()
+    root_logger.setLevel(DEBUG)
+    rotating_handler = handlers.RotatingFileHandler(
+        r'./app.log',
+        mode="a",
+        maxBytes=100 * 1024,
+        backupCount=3,
+        encoding="utf-8"
+    )
+    format = Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    rotating_handler.setFormatter(format)
+    root_logger.addHandler(rotating_handler)
+
+    block_logger = getLogger()
+    block_logger.setLevel(ERROR)  # DEBUGやINFOなどのレベルのログを無視
+    main_logger = getLogger("__main__")
+    main_logger.setLevel(DEBUG)
+
+set_logger()
+
+def log(arg, level=DEBUG):
+    logger = getLogger(__name__)
+    if level == DEBUG:
+        logger.debug(arg)
+    elif level == ERROR:
+        logger.error(arg)
 
 def get_current_term():
     now = datetime.datetime.now()
@@ -33,7 +64,7 @@ def scrape_syllabus_data(driver, dest):
             select = Select(driver.find_element(By.NAME, 'p_gakubu'))
             select.select_by_visible_text(name)
             driver.find_element(By.NAME, 'btnSubmit').click()
-            print(f"Scraping {name} data.")
+            log(f"Scraping {name} data.")
 
             while True:
                 try:
@@ -96,21 +127,21 @@ def process_schedule2(row):
 def check_versions():
     try:
         chrome_version = subprocess.run(['google-chrome', '--version'], capture_output=True, text=True)
-        print("Google Chrome version:", chrome_version.stdout)
+        log("Google Chrome version:"+chrome_version.stdout)
     except FileNotFoundError:
-        print("Google Chrome is not installed or not found in the PATH.")
+        log("Google Chrome is not installed or not found in the PATH.", level=ERROR)
 
     try:
         chromedriver_version = subprocess.run(['chromedriver', '--version'], capture_output=True, text=True)
-        print("Chromedriver version:", chromedriver_version.stdout)
+        log("Chromedriver version:"+chromedriver_version.stdout)
     except FileNotFoundError:
-        print("Chromedriver is not installed or not found in the PATH.")
+        log("Chromedriver is not installed or not found in the PATH.", level=ERROR)
 
 def format_syllabus_data(source_path, dest_path):
     with open(source_path, 'r', newline='', encoding='utf-8') as source, open(dest_path, 'w', newline='', encoding='utf-8') as dest:
         csvreader = csv.reader(source)
         csvwriter = csv.writer(dest)
-        print("Formatting data.")
+        log("Formatting data.")
         for row in csvreader:
             try:
                 han_row = [zen_to_han(cell, kana=False) for cell in row]
@@ -120,11 +151,11 @@ def format_syllabus_data(source_path, dest_path):
                     for final_row in fmt2:
                         csvwriter.writerow(final_row)
             except Exception as e:
-                print(e)
-                print(row)
+                log(e, level=ERROR)
+                log(row, level=ERROR)
 
 def main():
-    print("Scraping started.")
+    log("==========Scraping started==========")
     check_versions()
     year, term = get_current_term()
     dest_dir = '../data'
@@ -149,7 +180,7 @@ def main():
 
     format_syllabus_data(raw_dir, out_dir)
 
-    print("Scraping completed.")
+    log("==========Scraping completed==========")
 
 if __name__ == "__main__":
     main()
