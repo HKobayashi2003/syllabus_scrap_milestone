@@ -69,5 +69,8 @@ RUN pip install --upgrade pip && pip install -r /requirements.txt
 COPY ./start.sh /start.sh
 RUN chmod +x /start.sh
 
+# Remove carriage return characters from start.sh (for Windows compatibility)
+RUN sed -i 's/\r$//' /start.sh
+
 # Set up the command to run when the container starts
 CMD ["/start.sh"]
